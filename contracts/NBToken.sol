@@ -1,22 +1,26 @@
 pragma solidity >=0.4.22 <0.9.0;
 
-import "../node_modules/zeppelin-solidity/contracts/token/ERC721/ERC721Token.sol";
-import "./Counter.sol";
+import "./erc721/ERC721.sol";
+import "./erc721/ERC721Holder.sol";
+import "./utils/Counters.sol";
 
-contract NBToken is ERC721Token{
+contract NBToken is ERC721,ERC721Holder{
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-      
-    constructor (string _name, string _symbol) public ERC721Token(_name, _symbol){}
 
-   //发行NFT
-   function mintNft(address receiver, string tokenURI) external  returns (uint256) {
+    constructor () public ERC721("NB Token","NB"){}
+
+    function _baseURI() internal view override returns(string memory){
+        return "http://www.wangningbo.com/#";
+    }
+
+   function mintNft(address receiver) external  returns (uint256) {
         _tokenIds.increment();
-
         uint256 newNftTokenId = _tokenIds.current();
         _mint(receiver, newNftTokenId);
-        _setTokenURI(newNftTokenId, tokenURI);
         return newNftTokenId;
     }
-    
+
+
+
 }

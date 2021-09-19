@@ -1,0 +1,42 @@
+{
+	"compiler": {
+		"version": "0.4.24+commit.e67f0147"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"methods": {}
+		},
+		"userdoc": {
+			"methods": {}
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/Counter.sol": "Counters"
+		},
+		"evmVersion": "byzantium",
+		"libraries": {},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/Counter.sol": {
+			"keccak256": "0xfaf41736f8aed7de992a8a9a6e8bc793a9467d573d6ecefb9ebfe5166978fd18",
+			"urls": [
+				"bzzr://5e6afc1af4bee2aabaefc2f8575c3a7a8a4fdc262ad2ec511a6e888d0fe74f7f"
+			]
+		},
+		"zeppelin-solidity/contracts/math/SafeMath.sol": {
+			"keccak256": "0xa1c5e1d9ebbf654d332ca8e7a5c04a6a6a9d142eeaab3b988c2c909c81a62bef",
+			"urls": [
+				"bzzr://d062fb4a1b6de1f036ee0e73364a2532c4757eb68e95dd8c5cbb2d17b8732c6a"
+			]
+		}
+	},
+	"version": 1
+}
