@@ -1,6 +1,6 @@
 # NFT-Auction
 
-> 🏄‍♂️ Quick Start
+## 🏄‍♂️ Quick Start
 
 Prerequisites: [Node](https://nodejs.org/en/download/) plus [Yarn](https://classic.yarnpkg.com/en/docs/install/) and [Git](https://git-scm.com/downloads)
 
