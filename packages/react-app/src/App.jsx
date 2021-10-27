@@ -1,13 +1,13 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
-import { Alert, Button, Col, Menu, Row,List,Card } from "antd";
+import { Alert, Button, Col, Menu, Row, List, Card, Image, Carousel } from "antd";
 import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
-import { Account,Address, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
+import { Account, Address, Contract, AddressInput, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "./components";
 //import AuctionMarket from "./components/AuctionMarket"
 import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
 import { Transactor } from "./helpers";
@@ -72,8 +72,8 @@ const scaffoldEthProvider = navigator.onLine
   : null;
 const poktMainnetProvider = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider(
-      "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
-    )
+    "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
+  )
   : null;
 const mainnetInfura = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID)
@@ -171,8 +171,8 @@ function App(props) {
     poktMainnetProvider && poktMainnetProvider._isProvider
       ? poktMainnetProvider
       : scaffoldEthProvider && scaffoldEthProvider._network
-      ? scaffoldEthProvider
-      : mainnetInfura;
+        ? scaffoldEthProvider
+        : mainnetInfura;
 
   const [injectedProvider, setInjectedProvider] = useState();
   const [address, setAddress] = useState();
@@ -223,7 +223,7 @@ function App(props) {
   const yourLocalBalance = useBalance(localProvider, address);
 
   // Just plug in different 🛰 providers to get your balance on different chains:
-  const yourMainnetBalance = useBalance(mainnetProvider, address);
+  // const yourMainnetBalance = useBalance(mainnetProvider, address);
 
   // const contractConfig = useContractConfig();
 
@@ -260,107 +260,51 @@ function App(props) {
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
   console.log("🏷 Resolved austingriffith.eth as:",addressFromENS)
   */
-  const balance = useContractReader(readContracts, "NBToken", "balanceOf", [address]);
+  const balance = useContractReader(readContracts, "N", "balanceOf", [address]);
   console.log("🤗 read_contracts:", readContracts);
 
-    // 📟 Listen for broadcast events
-const transferEvents = useEventListener(readContracts, "NBToken", "Transfer", localProvider, 1);
-console.log("📟 Transfer events:", transferEvents);
+  // 📟 Listen for broadcast events
+  const transferEvents = useEventListener(readContracts, "N", "Transfer", localProvider, 1);
+  console.log("📟 Transfer events:", transferEvents);
 
-const yourBalance = balance && balance.toNumber && balance.toNumber();
-console.log("这是余额：",yourBalance);
-const [NBToken, setNBToken] = useState();
+  //
+  // 🧠 This effect will update Ns by polling when your balance changes
+  //
+  const yourBalance = balance && balance.toNumber && balance.toNumber();
+  const [Ns, setNs] = useState();
 
-useEffect(() => {
-  const updateNBToken = async () => {
-    const collectibleUpdate = [];
-    for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
-      try {
-        console.log("Getting token index", tokenIndex);
-        const tokenId = await readContracts.NBToken.tokenOfOwnerByIndex(address, tokenIndex);
-        console.log("这是你的tokenId", tokenId);
-        const tokenURI = await readContracts.NBToken.tokenURI(tokenId);
-        console.log("这是你的tokenURI", tokenURI);
-        const imageUri = "/images/"+tokenId+".png";
-        // const imageUri = "https://tse1.mm.bing.net/th/id/OET.f0f0ca17cec64b648e664e306718a8fb?w=272&h=272&c=7&rs=1&o=5&dpr=2&pid=1.9";
-        collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address,imageUri:imageUri});
-        // TODO: Optimize
-        // let svg;
-        // const svg = get_svg(tokenURI);
-        // const svg = decodeTokenURI(tokenURI);
-        // const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-        // console.log("ipfsHash", ipfsHash);
-        // axios({
-        //   method: "post",
-        //   url: backend,
-        //   data: {
-        //     token_uri: tokenURI,
-        //     base_url: baseURL
-        //   },
-        //   headers: {
-        //       "Content-Type": "application/json"
-        //   }
-        // })
-        // .then(response => {
-        //   svg = window.atob(response.data.result.image);
-          
-        //   console.log("svg fetched: ", svg);
-        //   try {
-        //     // const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-        //     // console.log("jsonManifest", jsonManifest);
-        //     collectibleUpdate.push({ id: tokenId, uri: tokenURI, svg: svg, owner: address});
-        //   } catch (e) {
-        //     console.log("error in svg fetched:", e);
-        //   }
-        // })
-        // .catch(error => {
-        //   console.log("error in svg fetched:", error);
-        // });
-      
-        // const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
-
-      } catch (e) {
-        console.log(e);
+  useEffect(() => {
+    const updateNs = async () => {
+      const collectibleUpdate = [];
+      for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
+        try {
+          const tokenId = await readContracts.N.tokenOfOwnerByIndex(address, tokenIndex);
+          const tokenURI = await readContracts.N.tokenURI(tokenId);
+          let base64Str = window.atob((tokenURI.split(',')[1]));
+          let base64Json = JSON.parse(base64Str);
+          let svg = decodeURIComponent(escape(window.atob((base64Json.image.split(',')[1])).replace(/_/g, "/")));
+          try {
+            collectibleUpdate.push({ id: tokenId, uri: tokenURI, svgBase64: base64Json.image, svg: svg, owner: address });
+          } catch (e) {
+            console.log("error in svg fetched:", e);
+          }
+        } catch (e) {
+          console.log(e);
+        }
       }
-    }
-    setNBToken(collectibleUpdate);
-  };
-  updateNBToken();
-}, [address, yourBalance]);
+      setNs(collectibleUpdate);
+    };
+    updateNs();
+  }, [address, yourBalance]);
   //
   // 🧫 DEBUG 👨🏻‍🔬
   //
-  useEffect(() => {
-    if (
-      DEBUG &&
-      mainnetProvider &&
-      address &&
-      selectedChainId &&
-      yourLocalBalance &&
-      yourMainnetBalance &&
-      readContracts &&
-      writeContracts &&
-      mainnetContracts
-    ) {
-      console.log("_____________________________________ 🏗 scaffold-eth _____________________________________");
-      console.log("🌎 mainnetProvider", mainnetProvider);
-      console.log("🏠 localChainId", localChainId);
-      console.log("👩‍💼 selected address:", address);
-      console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
-      console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-      console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
-      console.log("📝 readContracts", readContracts);
-      console.log("🌍 DAI contract on mainnet:", mainnetContracts);
-      console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
-      console.log("🔐 writeContracts", writeContracts);
-    }
-  }, [
+  useEffect(() => { }, [
     mainnetProvider,
     address,
     selectedChainId,
     yourLocalBalance,
-    yourMainnetBalance,
+    // yourMainnetBalance,
     readContracts,
     writeContracts,
     mainnetContracts,
@@ -512,7 +456,7 @@ useEffect(() => {
       </div>
     );
   }
-
+  const [transferToAddresses, setTransferToAddresses] = useState({});
   return (
     <div className="App">
       {/* ✏️ Edit the header and change the title to your project name */}
@@ -520,7 +464,7 @@ useEffect(() => {
       {networkDisplay}
       <BrowserRouter>
         <Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
-        <Menu.Item key="/auction-market">
+          <Menu.Item key="/auction-market">
             <Link
               onClick={() => {
                 setRoute("/auction-market");
@@ -547,7 +491,7 @@ useEffect(() => {
               }}
               to="/"
             >
-              NBToken
+              N
             </Link>
           </Menu.Item>
           <Menu.Item key="/clock-auction">
@@ -557,118 +501,73 @@ useEffect(() => {
               }}
               to="/clock-auction"
             >
-             ClockAuction
+              ClockAuction
             </Link>
           </Menu.Item>
-          <Menu.Item key="/hints">
+          <Menu.Item key="/transfers">
             <Link
               onClick={() => {
-                setRoute("/hints");
+                setRoute("/transfers");
               }}
-              to="/hints"
+              to="/transfers"
             >
-              Hints
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/exampleui">
-            <Link
-              onClick={() => {
-                setRoute("/exampleui");
-              }}
-              to="/exampleui"
-            >
-              ExampleUI
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/mainnetdai">
-            <Link
-              onClick={() => {
-                setRoute("/mainnetdai");
-              }}
-              to="/mainnetdai"
-            >
-              Mainnet DAI
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/subgraph">
-            <Link
-              onClick={() => {
-                setRoute("/subgraph");
-              }}
-              to="/subgraph"
-            >
-              Subgraph
+              Transfers
             </Link>
           </Menu.Item>
         </Menu>
 
         <Switch>
-        <Route path="/my-nft">
-        <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-        <h1>Hello，This is your NFTs !</h1>
+          <Route path="/my-nft">
+            <div style={{ width: 600, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              <h1>Hello，This is your NFTs !</h1>
               <List
                 bordered
-                dataSource={NBToken}
+                dataSource={Ns}
                 renderItem={item => {
                   const id = item.id.toNumber();
                   return (
-                    <List.Item key={id + "_" + item.uri + "_" + item.owner}>
-                     
-                      <Card
-                        title={
-                          <div>
-                            <p style={{ fontSize: 16, marginRight: 8 }}>#{id}</p>
-                            {/* <p style={{ fontSize: 16, marginRight: 8 }}>{item.uri}</p>
-                            <p style={{ fontSize: 16, marginRight: 8 }}>{item.owner}</p> */}
-                          </div>
-                        }
-                      >
-                        <div>
-                          <img src={item.imageUri} style={{ maxWidth: 150 }} />
-                        </div>
-                        <div>{item.description}</div>
+                    <List.Item key={id + "_" + item.uri + "_" + item.owner} >
+
+                      <Card title={"#" + id}>
+                        {/* style={{ width: '300px', height: '300px' }} */}
+                        {/* <div id={"nft_" + item.id}>
+                            <div dangerouslySetInnerHTML={{ __html: item.svg }} />
+
+                          </div> */}
+                        <Image src={item.svgBase64} />
                       </Card>
                       <div>
-                      <Address
-                          address={item.owner}
-                          ensProvider={mainnetProvider}
-                          blockExplorer={blockExplorer}
-                          fontSize={18}
-                        />
-                            <p style={{ fontSize: 16, marginRight: 8 }}>{item.uri}</p>
-                      </div>
-
-                      {/* <div>
                         owner:{" "}
                         <Address
                           address={item.owner}
                           ensProvider={mainnetProvider}
                           blockExplorer={blockExplorer}
                           fontSize={16}
-                        /><AddressInput
-                        ensProvider={mainnetProvider}
-                        placeholder="transfer to address"
-                        value={transferToAddresses[id]}
-                        onChange={newValue => {
-                          const update = {};
-                          update[id] = newValue;
-                          setTransferToAddresses({ ...transferToAddresses, ...update });
-                        }}
-                      />
-                      <Button
-                        onClick={() => {
-                          console.log("writeContracts", writeContracts);
-                          tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
-                        }}
-                      >
-                        Transfer
-                      </Button>
-                    </div> */}
-                  </List.Item>
-                );
-              }}
-            />
-          </div>
+                        />
+                        <AddressInput
+                          ensProvider={mainnetProvider}
+                          placeholder="transfer to address"
+                          value={transferToAddresses[id]}
+                          onChange={newValue => {
+                            const update = {};
+                            update[id] = newValue;
+                            setTransferToAddresses({ ...transferToAddresses, ...update });
+                          }}
+                        />
+                        <Button
+                          onClick={() => {
+                            console.log("writeContracts", writeContracts);
+                            tx(writeContracts.N.transferFrom(address, transferToAddresses[id], id));
+                          }}
+                        >
+                          Transfer
+                        </Button>
+                      </div>
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
           </Route>
           <Route exact path="/">
             {/*
@@ -678,17 +577,17 @@ useEffect(() => {
             */}
 
             <Contract
-              name="NBToken"
+              name="N"
               signer={userSigner}
               provider={localProvider}
               address={address}
               blockExplorer={blockExplorer}
               contractConfig={contractConfig}
             />
-            
+
           </Route>
           <Route path="/clock-auction">
-          <Contract
+            <Contract
               name="ClockAuction"
               signer={userSigner}
               provider={localProvider}
@@ -696,6 +595,23 @@ useEffect(() => {
               blockExplorer={blockExplorer}
               contractConfig={contractConfig}
             />
+          </Route>
+          <Route path="/transfers">
+            <div style={{ width: 600, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              <List
+                bordered
+                dataSource={transferEvents}
+                renderItem={item => {
+                  return (
+                    <List.Item key={item[0] + "_" + item[1] + "_" + item.blockNumber + "_" + item[2]}>
+                      <span style={{ fontSize: 16, marginRight: 8 }}>#</span>
+                      <Address address={item.args.from} ensProvider={mainnetProvider} fontSize={16} /> =&gt;
+                      <Address address={item.args.to} ensProvider={mainnetProvider} fontSize={16} />
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
           </Route>
           <Route path="/hints">
             <Hints
@@ -716,8 +632,8 @@ useEffect(() => {
               tx={tx}
               writeContracts={writeContracts}
               readContracts={readContracts}
-              // purpose={purpose}
-              // setPurposeEvents={setPurposeEvents}
+            // purpose={purpose}
+            // setPurposeEvents={setPurposeEvents}
             />
           </Route>
           <Route path="/mainnetdai">
